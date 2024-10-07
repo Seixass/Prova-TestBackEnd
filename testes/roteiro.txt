@@ -1,0 +1,164 @@
+- Testes são pedaços de código que você cria para ter certeza que
+uma parte do sistema continua funcionando.
+
+- TDD (Test-Driven Development) = Desenvolvimento orientado a testes =>
+teste primeiro, funcionalidade depois
+
+- Tipos de testes:
+-- Testes unitários (unit test)
+
+- É basicamente quando você quer testar uma parte isolada do seu código, não é uma funcionalidade
+é uma parte do código propriamente dito, por exemplo, uma biblioteca para testes matemáticos
+e você usa ela em partes especificas do seu sistema, então queremos criar testes para essa biblioteca
+por exemplo para testar, soma, multiplicação, divisão e tudo mais, a ideia é testar tudo dela, logo
+nesse caso, queremos testar uma classe, uma função ou um objeto, o fato é que ela é apenas uma unidade
+logo chamamos esse teste de teste unitário.
+
+-- Teste de integração (integration test)
+
+- É basicamente quando vamos testar mais de uma unidade do nosso código, por exemplo, quando queremos
+saber se o item x e o item y conseguem funcionar bem juntos, um ótimo exemplo é: quando queremos criar
+um usuário e logar nesse usuário, geralmente um cadastro envolve duas etapas, a etapa do cadastro e a
+etapa de login, no caso, o teste de integração é um teste só, no qual a gente faz o cadastro e o login
+pra gente testar se esse processo de cadastro com login está funcionando, chamamos de teste de integração
+
+-- Testes end-to-end (e2e test)
+
+- Os testes e2e são focados na parte visual do nosso programa, ele é um teste mais gráfico, ou seja
+vamos testar o sistema como o usuário de fato está vendo, então geralmente os testes e2e são feitos na
+interface gráfica de fato, na experiencia do usuário de fato, ele vai testar literalmente a tela, o view
+por exemplo, se eu clicar no botão X o que é que acontece? vai abri alguma coisa, fazer alguma coisa
+e baseado nisso, vemos se o comportamento é o esperado, se sim, passa no teste.
+
+-- Os testes normalmente são feitos durante o Desenvolvimento do projeto
+portanto, nós utilizaremo o Jest apenas nas dependências de Desenvolvimento
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+nessa aula, vamos preparar nosso ambiente para fazer testes no banco de dados, normalmente, quando
+estamos fazendo um sistema e fazendo testes para ele, nos vamos ter que fazer testes que usam 
+banco de dados, e não é bom usar o mesmo banco de dados que o usuário final, ou até o desenvolvedor
+está usando, não é uma boa prática, e nem faz muito sentido se você para para pensar.
+
+então para isso, nos vamos criar um banco de dados especifico para testes, 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+Como vamos testar nossas rotas da melhor forma possivel?
+
+nós vamos precisar fazer requisições, porém, e se eu não souber onde meu servidor está hospedado?
+
+atualmente, nosso servidor é o localhost com uma porta especifica, porém, e se eu mudar a porta?
+e se eu mudar a hospedagem, e se eu não souber onde está hospedado?
+
+então, eu não posso fazer um teste especificamente para localhost.
+
+é por isso que nós vamos utilizar a biblioteca supertest, ela vai nos ajudar na hora de fazer o teste
+na hora do teste ela gera um servidor especifico para fazer os testes, então nos fazemos
+requisições para esse servidor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Vamos fazer requisições, porém, e se nós não soubermos onde o servidor está hospedado?
+
+agora, ele está na nossa maquina, localhost e a porta 3000, mas e se colocarmos nosso código
+em um outro servidor?
+
+nós teríamos que ir em cada parte do test modificando esse dados.
+
+e pra isso, nós vamos usar um biblioteca chamada supertest, ela vai auxiliar a gente no uso do Jest
+e com essa biblioteca, na hora de fazer o teste, a gente consegue gerar um servidor especifico para
+fazer esses testes, então nós fazemos as requisições para esse servidor especifico que geramos 
+para fazer os testes.
+
+para começar, nos vamos exportar nosso servidor como default, e chamar nosso antigo server de app
+e criar um novo server
+
+nesse server, nós vamos importar o nosso "app", e vamos usar o listen nessa porta, e pra isso vamos
+precisar das variáveis de ambiente também, portanto nós importamos o dotenv
+
+então, no fim das contas, pq fazer isso?
+
+então, quando eu quero colocar o servidor no ar, eu rodo o server, quando eu quero apenas pegar
+meu servidor pra preparar ele para rodar as minhas rotas, e eu puder testar elas, eu vou puxar
+através do app, pq ele tem toda a configuração, menos o listen, o listen ele vai servir pra gente
+hospedar ele, ou rodar em uma porta especifica, eu vou rodar ele internamente.
+
+é por isso que fazemos essa separação, de pegar o servidor inteiro e pegar toda configuração dele
+e deixar separado e bonito, e na hora de, de fato colocar no ar o nosso servidor, ai eu simplesmente
+puxo minha aplicação inteira no server e uso o listen e já era.
+
+feito isso, vamos instalar o supertest: npm i -D supertest
+
+nessa função, como é uma requisição, não vamos usar async await aqui, vamos usar uma o promise normal
+com o uso da função done (feito), fazendo isso, nós vamos auxiliar o test a saber quando foi que ele
+acabou, como é uma requisição que vamos precisar esperar respostas e tal, nós vamos auxiliar o Jest
+dizendo quando foi que o teste acabou, além disso, devemos fazer a mesma coisa que fizemos na
+aplicação passada, que é forçar o nosso projeto a criar um novo banco de dados sempre que rodar nossos
+testes.
+
+a função vai ser basicamente:
+
+it('alguma coisa aqui', (done)=>{
+    request(app) //aqui ele cria o servidor só pra teste
+        .get(/ping)//aqui depende do seu endpoint, seja ela get, post ou qualquer um
+        .then(response => {
+            expect(response.body.pong).toBeTruthy()
+            return done()
+        })
+})
+
+esse é mais simples, porém, quando imaginarmos testes para os nossos endpoints, temos que
+imaginar varios cenarios onde nossos testes devem dar certo e onde eles podem dar errado
+para isso, é necessario testar nosso projeto intensivamente
+
+it('deve registrar um novo usuario', (done)=>{
+    request(app) //aqui ele cria o servidor só pra teste
+        .post(/register)//aqui depende do seu endpoint, seja ela get, post ou qualquer um
+        .send(`email=${email}&password=${password}`)//o tipo de formato que vamos usar aqui é tipo URLEncod
+        .then(response => {
+            expect(response.body.error).toBeUndefined()
+            expect(response.body).toHaveProperty('id')
+            return done()
+        })
+})
+
+it('não deve registrar um usuario com email existente', (done)=>{
+    request(app) //aqui ele cria o servidor só pra teste
+        .post(/register)//aqui depende do seu endpoint, seja ela get, post ou qualquer um
+        .send(`email=${email}&password=${password}`)//o tipo de formato que vamos usar aqui é tipo URLEncod
+        .then(response => {
+            expect(response.body.error).not.toBeUndefined()
+            return done()
+        })
+})
+
+it('não deve registrar um usuario sem a senha', (done)=>{
+    request(app) //aqui ele cria o servidor só pra teste
+        .post(/register)//aqui depende do seu endpoint, seja ela get, post ou qualquer um
+        .send(`email=${email}`)//o tipo de formato que vamos usar aqui é tipo URLEncod
+        .then(response => {
+            expect(response.body.error).not.toBeUndefined()
+            return done()
+        })
+})
